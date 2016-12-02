@@ -20,27 +20,6 @@ static struct trie_node * root = NULL;
 static int node_count = 0;
 static int max_count = 5;  //Try to stay at no more than 100 nodes
 
-/*
-**  STRREV.C - reverse a string in place
-**
-**  public domain by Bob Stout
-*/
-char *strrev(char *str)
-{
-    char *p1, *p2;
-
-    if (! str || ! *str)
-        return str;
-
-    for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
-    {
-        *p1 ^= *p2;
-        *p2 ^= *p1;
-        *p1 ^= *p2;
-    }
-    return str;
-}
-
 struct trie_node * new_leaf (const char *string, size_t strlen, int32_t ip4_address) {
     struct trie_node *new_node = malloc(sizeof(struct trie_node));
     node_count++;
@@ -436,20 +415,18 @@ int drop_one_node  () {
 
         temp[cur_node->strlen] = '\0';
         printf("temp: %s\n", temp);
-        //strncat(full_string, temp, cur_node->strlen);
 
         full_len += cur_node->strlen;
 
+        //advance to next child in list if it exists. If it doesnt, break the loop
         if(cur_node->children != NULL)
             cur_node = cur_node->children;
         else 
             break;
-        // while(cur_node->next != NULL)
-        //     cur_node = cur_node->next;
-
 
     } while(1);
 
+    //reverse full_string
     for(i = 0; i<full_len/2; i++)
     {
         char temp;
