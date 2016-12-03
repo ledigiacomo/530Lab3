@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "trie.h"
+#include <pthread.h>
 
 struct trie_node {
     struct trie_node *next;  /* parent list */
@@ -390,6 +391,8 @@ int delete  (const char *string, size_t strlen) {
     if (strlen == 0)
         return 0;
 
+    assert(strlen < 64);
+
     return (NULL != _delete(root, string, strlen));
 }
 
@@ -397,8 +400,8 @@ int delete  (const char *string, size_t strlen) {
 /* Find one node to remove from the tree. 
  * Use any policy you like to select the node.
  */
-int drop_one_node  () {
-    // Your code here
+int drop_one_node  () 
+{
     printf("Before Drop: \n");
     print();
     int i, full_len = 0;
@@ -435,7 +438,7 @@ int drop_one_node  () {
         full_string[full_len-i-1] = temp;
     }
 
-    delete(full_string, full_len);
+    _delete(root, full_string, full_len);
 
     full_string[full_len] = '\0';
     printf("reversed Str: %s\n", full_string);

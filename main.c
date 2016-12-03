@@ -23,7 +23,7 @@ int simulation_length = 1; // default to 30 seconds
 volatile int finished = 0;
 
 // Uncomment this line for debug printing
-// #define DEBUG 1
+//#define DEBUG 1
 #ifdef DEBUG
 #define DEBUG_PRINT(...) printf(__VA_ARGS__)
 #else
@@ -67,6 +67,9 @@ client(void *arg)
             return NULL;
         }
 
+        if (length == 0)
+            continue;
+            
         DEBUG_PRINT("Length is %d\n", length);
         memset(buf, 0, 64);
         /* Generate a random string in lowercase */
@@ -295,7 +298,27 @@ int self_tests() {
     DELETE_TEST("eeonbws", 7);
     DELETE_TEST("zhriz", 5); 
     DELETE_TEST("pzkvlyi", 7);
-  
+
+    // Kent tests
+    printf("\n\n\n");
+    INSERT_TEST("numzzspbjwnjdgtzhzpkgykdzgirnzkfohvhkergirzbzwefzowgz", strlen("numzzspbjwnjdgtzhzpkgykdzgirnzkfohvhkergirzbzwefzowgz"), 1);
+    INSERT_TEST("zxkczzudhzmzqhsu", strlen("zxkczzudhzmzqhsu"), 2);
+    INSERT_TEST("z", 1, 2);
+    print();
+    INSERT_TEST("wkwyqpoozzvbrznkbtmyhmzyuaczlxhmyoonkhjavzbwkrzz", strlen("wkwyqpoozzvbrznkbtmyhmzyuaczlxhmyoonkhjavzbwkrzz"), 3);
+    print();
+    SEARCH_TEST("wkwyqpoozzvbrznkbtmyhmzyuaczlxhmyoonkhjavzbwkrzz", strlen("wkwyqpoozzvbrznkbtmyhmzyuaczlxhmyoonkhjavzbwkrzz"), 3);
+
+    INSERT_TEST("twnobkfdzcpwzgfzdh", strlen("twnobkfdzcpwzgfzdh"), 4);
+    print();
+    INSERT_TEST("qdssbllupsqsszvzoqlzkziozwncodvez", strlen("qdssbllupsqsszvzoqlzkziozwncodvez"), 5);
+    DELETE_TEST("numzzspbjwnjdgtzhzpkgykdzgirnzkfohvhkergirzbzwefzowgz", strlen("numzzspbjwnjdgtzhzpkgykdzgirnzkfohvhkergirzbzwefzowgz"));
+    print();
+    INSERT_TEST("zzzz", 4, 6);
+    print();
+    DELETE_TEST("zxkczzudhzmzqhsu", strlen("zxkczzudhzmzqhsu"));    
+    print();
+    INSERT_TEST("azbz", 4, 7);
     printf("End of self-tests, tree is:\n");
     print();
     printf("End of self-tests\n");
@@ -347,28 +370,31 @@ int main(int argc, char ** argv) {
     init(numthreads);
     srandom(time(0));
 
+    tinfo = calloc(numthreads + separate_delete_thread, sizeof(pthread_t));
+
+    // Create the delete thread before running the self tests, just in case
+    // someone wants to test against it
+    if (separate_delete_thread) {
+        rv = pthread_create(&tinfo[numthreads], NULL,
+                            &delete_thread, NULL);
+        if (rv != 0) {
+            printf ("Delete thread creation failed %d\n", rv);
+            return rv;
+        }
+    }
+
     // Run the self-tests if we are in debug mode 
 #ifdef DEBUG
     self_tests();
 #endif
 
     // Launch client threads
-    tinfo = calloc(numthreads + separate_delete_thread, sizeof(pthread_t));
     for (i = 0; i < numthreads; i++) {
 
         rv = pthread_create(&tinfo[i], NULL,
                             &client, NULL);
         if (rv != 0) {
             printf ("Thread creation failed %d\n", rv);
-            return rv;
-        }
-    }
-
-    if (separate_delete_thread) {
-        rv = pthread_create(&tinfo[numthreads], NULL,
-                            &delete_thread, NULL);
-        if (rv != 0) {
-            printf ("Delete thread creation failed %d\n", rv);
             return rv;
         }
     }
