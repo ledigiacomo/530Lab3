@@ -19,7 +19,7 @@
 #include "trie.h"
 
 int separate_delete_thread = 0;
-int simulation_length = 1; // default to 30 seconds
+int simulation_length = 5; // default to 30 seconds
 volatile int finished = 0;
 
 // Uncomment this line for debug printing

@@ -21,6 +21,8 @@ static struct trie_node * root = NULL;
 static int node_count = 0;
 static int max_count = 10;  //Try to stay at no more than 100 nodes
 static pthread_mutex_t coarse_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+extern int separate_delete_thread;
 
 struct trie_node * new_leaf (const char *string, size_t strlen, int32_t ip4_address) {
     struct trie_node *new_node = malloc(sizeof(struct trie_node));
@@ -92,6 +94,7 @@ void init(int numthreads) {
 
 void shutdown_delete_thread() {
     // Don't need to do anything in the sequential case.
+    // pthread_join();
     return;
 }
 
@@ -307,6 +310,9 @@ int insert (const char *string, size_t strlen, int32_t ip4_address)
         ret = 1;
     }
 
+    if(node_count > max_count)
+        pthread_cond_signal(&cond); 
+
     ret = _insert (string, strlen, ip4_address, root, NULL, NULL);
 
     //unlock entire tree
@@ -488,16 +494,26 @@ int drop_one_node()
 
 /* Check the total node count; see if we have exceeded a the max.
  */
-void check_max_nodes  () 
+void check_max_nodes() 
 {
-    //lock entire tree
-    pthread_mutex_lock(&coarse_mutex);
+    if(separate_delete_thread)
+    {
+        while (node_count > max_count)
+            pthread_cond_wait (&cond, &coarse_mutex);
 
-    while (node_count > max_count)
-        drop_one_node();
+        //lock entire tree
+        pthread_mutex_lock(&coarse_mutex);
 
-    //unlock entire tree
-    pthread_mutex_unlock(&coarse_mutex);
+        while (node_count > max_count)
+            drop_one_node();
+
+        //unlock entire tree
+        pthread_mutex_unlock(&coarse_mutex);
+    }
+
+    else 
+        while (node_count > max_count) 
+            drop_one_node();
 }
 
 
