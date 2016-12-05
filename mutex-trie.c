@@ -93,8 +93,8 @@ void init(int numthreads) {
 }
 
 void shutdown_delete_thread() {
-    // Don't need to do anything in the sequential case.
-    // pthread_join();
+    if(separate_delete_thread)
+        pthread_cond_signal(&cond);
     return;
 }
 
@@ -194,6 +194,8 @@ int _insert (const char *string, size_t strlen, int32_t ip4_address,
             new_node = new_leaf (string, strlen, ip4_address);
             node->strlen -= keylen;
             new_node->children = node;
+            new_node->next = node->next;
+            node->next = NULL;
 
             assert ((!parent) || (!left));
 
@@ -512,8 +514,12 @@ void check_max_nodes()
     }
 
     else 
-        while (node_count > max_count) 
+    {
+        while (node_count > max_count)
+        { 
             drop_one_node();
+        }
+    }
 }
 
 
