@@ -515,10 +515,16 @@ void check_max_nodes()
 
     else 
     {
+        //lock entire tree
+        pthread_mutex_lock(&coarse_mutex);
+
         while (node_count > max_count)
         { 
             drop_one_node();
         }
+
+        //unlock entire tree
+        pthread_mutex_unlock(&coarse_mutex);
     }
 }
 

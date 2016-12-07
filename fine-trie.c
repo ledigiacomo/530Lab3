@@ -239,6 +239,7 @@ int _insert (const char *string, size_t strlen, int32_t ip4_address,
 
             if(parent)
                 pthread_mutex_unlock(&parent->fine_mutex);
+            pthread_mutex_unlock(&(node->fine_mutex));
             pthread_mutex_unlock(&(new_node->fine_mutex));
             return 1;
         } 
@@ -331,11 +332,9 @@ int _insert (const char *string, size_t strlen, int32_t ip4_address,
 
             else if (left) 
             {
-                if(left)
-                    pthread_mutex_lock(&(left->fine_mutex));
+                pthread_mutex_lock(&(left->fine_mutex));
                 left->next = new_node;
-                if(left)
-                    pthread_mutex_unlock(&(left->fine_mutex));
+                pthread_mutex_unlock(&(left->fine_mutex));
             } 
 
             else if ((!parent) && (!left)) 
@@ -398,11 +397,9 @@ int _insert (const char *string, size_t strlen, int32_t ip4_address,
 
                 else if (left && left->next == node)
                 {
-                    if(left)
-                        pthread_mutex_lock(&(left->fine_mutex));
+                    pthread_mutex_lock(&(left->fine_mutex));
                     left->next = new_node;
-                    if(left)
-                        pthread_mutex_unlock(&(left->fine_mutex));
+                    pthread_mutex_unlock(&(left->fine_mutex));
                 }
 
                 if(parent)
@@ -410,7 +407,8 @@ int _insert (const char *string, size_t strlen, int32_t ip4_address,
                 pthread_mutex_unlock(&(new_node->fine_mutex));
             }
         }
-       
+        if(parent)
+            pthread_mutex_unlock(&parent->fine_mutex); 
         pthread_mutex_unlock(&(node->fine_mutex));
         return 1;
     }
